@@ -1,30 +1,45 @@
 var express = require('express');
+var path = require('path'); //pour le path du dossier /public
 var logger = require('morgan');
 var bodyParser = require('body-parser');
+
 var mongoose = require('mongoose');
-
-var routes = require('./routes/index');
-var places = require('./routes/places');
-
-var mongoURL = 'mongodb://localhost/participamap';
-
-mongoose.connect(mongoURL);
+require('./models/place');
+require('./models/users');
+mongoose.connect('mongodb://localhost/participamap');
 var db = mongoose.connection;
-
 db.on('error', function onDBConnectionError() {
   console.error('Error: impossible to connect to MongoDB. Exiting...');
   process.exit(1);
 });
-
 db.once('open', function onDBOpen() {
   console.log('Successfully connected to MongoDB!\n');
 });
 
+
+//utiliser passport pour auth
+var passport = require('passport');
+require('./config/passport');
+
+var routes = require('./routes/index');
+var places = require('./routes/places');
+
 var app = express();
+
+//view engine setup
+app.set('views', path.join(__dirname,'views'));
+app.set('view engine', 'hbs');
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+
+
+
+app.use(express.static(path.join(__dirname,'public')));
+
+//initialisation du passport
+app.use(passport.initialize());
 
 // Routes declarations
 app.use('/', routes);
